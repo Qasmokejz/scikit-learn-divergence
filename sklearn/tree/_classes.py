@@ -73,7 +73,8 @@ CRITERIA_CLF = {
     "gini": _criterion.Gini,
     "log_loss": _criterion.Entropy,
     "entropy": _criterion.Entropy,
-    "divexp_Entropy": _criterion.divexp_Entropy
+    "divexp_entropy": _criterion.divexp_entropy,
+    "divexp_fpr": _criterion.divexp_fpr
 }
 CRITERIA_REG = {
     "squared_error": _criterion.MSE,
@@ -721,7 +722,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    NOTE: ADDED NEW CRITERION 'divexp_Entropy'
+    NOTE: ADDED NEW CRITERION 'divexp_entropy', 'divexp_fpr'
 
     criterion : {"gini", "entropy", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
@@ -959,7 +960,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
-        "criterion": [StrOptions({"gini", "entropy", "log_loss", 'divexp_Entropy'}), Hidden(Criterion)],
+        "criterion": [StrOptions({"gini", "entropy", "log_loss", 'divexp_entropy', 'divexp_fpr'}), Hidden(Criterion)],
         "class_weight": [dict, list, StrOptions({"balanced"}), None],
     }
 
@@ -1118,7 +1119,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             "gini",
             "log_loss",
             "entropy",
-            "divexp_Entropy"
+            "divexp_entropy"
+            "divexp_fpr"
         }
         return {"multilabel": True, "allow_nan": allow_nan}
 

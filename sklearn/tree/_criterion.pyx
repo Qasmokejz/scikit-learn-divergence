@@ -688,7 +688,8 @@ cdef class Entropy(ClassificationCriterion):
         impurity_left[0] = entropy_left / self.n_outputs
         impurity_right[0] = entropy_right / self.n_outputs
 
-cdef class divexp_Entropy(ClassificationCriterion):
+#============================== DivExplorer Criterion ==============================
+cdef class divexp_entropy(ClassificationCriterion):
     r"""divexplorer testing version of Entropy impurity criterion.
 
     This handles cases where the target is a classification taking values
@@ -771,6 +772,83 @@ cdef class divexp_Entropy(ClassificationCriterion):
         impurity_left[0] = entropy_left / self.n_outputs
         impurity_right[0] = entropy_right / self.n_outputs
 
+cdef class divexp_fpr(ClassificationCriterion):
+    r"""divexplorer testing version of fpr impurity criterion.
+
+    This handles cases where the target is a classification taking values
+    0, 1, ... K-2, K-1. If node m represents a region Rm with Nm observations,
+    then let
+
+        count_k = 1 / Nm \sum_{x_i in Rm} I(yi = k)
+
+    be the proportion of class k observations in node m.
+
+    ==================================================
+    For divexplorer:
+    f is defined on the basis of a boolean outcome function o(x):
+
+        fo(S) = k+ / (k+ + k-)
+        where k+ = len({x ∈ S | o(x) = T}) and k- = len({x ∈ S | o(x) = F})
+
+    Testing on FPR = FP/(FP+TN)
+    """
+    # NOTE: labels # cols: [tp, fp, tn, fn]
+    cdef double node_impurity(self) noexcept nogil:
+        """Evaluate the impurity of the current node.
+
+        Evaluate the cross-entropy criterion as impurity of the current node,
+        i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
+        better.
+        """
+        cdef double entropy = 0.0
+        cdef double count_k
+        cdef SIZE_t k
+        cdef SIZE_t c
+
+        for k in range(self.n_outputs):
+            for c in range(self.n_classes[k]):
+                count_k = self.sum_total[k, c]
+                if count_k > 0.0:
+                    count_k /= self.weighted_n_node_samples
+                    entropy -= count_k * log(count_k)
+
+        return entropy / self.n_outputs
+
+    cdef void children_impurity(self, double* impurity_left,
+                                double* impurity_right) noexcept nogil:
+        """Evaluate the impurity in children nodes.
+
+        i.e. the impurity of the left child (sample_indices[start:pos]) and the
+        impurity the right child (sample_indices[pos:end]).
+
+        Parameters
+        ----------
+        impurity_left : double pointer
+            The memory address to save the impurity of the left node
+        impurity_right : double pointer
+            The memory address to save the impurity of the right node
+        """
+        cdef double entropy_left = 0.0
+        cdef double entropy_right = 0.0
+        cdef double count_k
+        cdef SIZE_t k
+        cdef SIZE_t c
+
+        for k in range(self.n_outputs):
+            for c in range(self.n_classes[k]):
+                count_k = self.sum_left[k, c]
+                if count_k > 0.0:
+                    count_k /= self.weighted_n_left
+                    entropy_left -= count_k * log(count_k)
+
+                count_k = self.sum_right[k, c]
+                if count_k > 0.0:
+                    count_k /= self.weighted_n_right
+                    entropy_right -= count_k * log(count_k)
+
+        impurity_left[0] = entropy_left / self.n_outputs
+        impurity_right[0] = entropy_right / self.n_outputs
+#============================== End DivExplorer Criterion ==============================
 
 cdef class Gini(ClassificationCriterion):
     r"""Gini Index impurity criterion.
