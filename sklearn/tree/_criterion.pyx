@@ -702,8 +702,19 @@ cdef class divexp_Entropy(ClassificationCriterion):
     The cross-entropy is then defined as
 
         cross-entropy = -\sum_{k=0}^{K-1} count_k log(count_k)
-    """
 
+    ==================================================
+    for divexplorer:
+    f is defined on the basis of a boolean outcome function o(x):
+
+        fo(S) = k+ / (k+ + k-)
+        where k+ = len({x ∈ S | o(x) = T}) and k- = len({x ∈ S | o(x) = F})
+
+    The entropy is then defined as
+
+        H(S,fo) = -fo(S) * log(fo(S)) - (1-fo(S)) * log(1-fo(S))
+    """
+    # NOTE: labels # cols: [tp, fp, tn, fn]
     cdef double node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.
 
